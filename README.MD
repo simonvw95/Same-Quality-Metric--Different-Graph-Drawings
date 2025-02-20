@@ -43,15 +43,3 @@ For the following six target shapes we spoof 5 graphs ('bar-albert, 'polbooks', 
 ![](example_figures/header_github.png)
 ![](example_figures/part2_github.png)
 ![](example_figures/part3_github.png)
-
-
-
-
-
-
-
-temp
-to do:
-add explanations to scripts and how to setup the environment
-add pictures of results
-work on rick roll gif
