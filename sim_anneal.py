@@ -72,7 +72,7 @@ def sim_anneal_torch(x0, args, args_qm, start_temp, max_N, abs_diff = 0.0075):
         if torch.abs(tar_value - qm_loss) <= abs_diff:
             new_sol = new_coords.clone()
             curr_loss_sim = new_loss_sim
-            curr_loss_qm =
+            curr_loss_qm = qm_loss
 
             # update the tqdm bar
             pbar.set_description("Best Similarity: " + str(round(best_loss_sim.item(), 4)) + "| Current Similarity: " + str(round(curr_loss_sim.item(), 4)) + "| curr qm loss: " + str(round(curr_loss_qm.item(), 4)))
