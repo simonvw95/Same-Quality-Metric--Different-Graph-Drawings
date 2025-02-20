@@ -6,6 +6,7 @@ def circle_pos(n):
 
     circle_graph = nx.cycle_graph(n)
     # pos_circle = nx.forceatlas2_layout(circle_graph)
+    # Kamada Kawi instead of FA2 since FA2 sometimes twists circles..
     pos_circle = nx.kamada_kawai_layout(circle_graph)
     target_pos = np.array([[float(pos_circle[k][0]), float(pos_circle[k][1])] for k in pos_circle])
 
