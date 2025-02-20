@@ -3,79 +3,8 @@ import networkx as nx
 import copy
 import torch
 
-from scipy.spatial.distance import directed_hausdorff
 from scipy.stats import wasserstein_distance_nd
-
-
-def orthogonal_procrustes_np(A, B, check_finite=True):
-    """
-    Compute the matrix solution of the orthogonal Procrustes problem.
-    Given matrices A and B of equal shape, find an orthogonal matrix R
-    that most closely maps A to B [1]_.
-    Note that unlike higher level Procrustes analyses of spatial data,
-    this function only uses orthogonal transformations like rotations
-    and reflections, and it does not use scaling or translation.
-    Parameters
-    """
-
-    if check_finite:
-        A = np.asarray_chkfinite(A)
-        B = np.asarray_chkfinite(B)
-    else:
-        A = np.asanyarray(A)
-        B = np.asanyarray(B)
-
-    if A.ndim != 2:
-        raise ValueError('expected ndim to be 2, but observed %s' % A.ndim)
-    if A.shape != B.shape:
-        raise ValueError('the shapes of A and B differ (%s vs %s)' % (
-            A.shape, B.shape))
-
-    # Be clever with transposes, with the intention to save memory.
-    input = B.T.dot(A).T
-    u, w, vt = np.linalg.svd(input)
-    R = u.dot(vt)
-    scale = w.sum()
-
-    return R, scale
-
-
-def criterion_procrustes_np(data1, data2, return_mat=False):
-    mtx1 = np.array(data1, dtype=np.double, copy=True)
-    mtx2 = np.array(data2, dtype=np.double, copy=True)
-
-    if mtx1.ndim != 2 or mtx2.ndim != 2:
-        raise ValueError("Input matrices must be two-dimensional")
-    if mtx1.shape != mtx2.shape:
-        raise ValueError("Input matrices must be of same shape")
-    if mtx1.size == 0:
-        raise ValueError("Input matrices must be >0 rows and >0 cols")
-
-    # translate all the data to the origin
-    mtx1 -= np.mean(mtx1, 0)
-    mtx2 -= np.mean(mtx2, 0)
-    # print("manual norm")
-    norm1 = np.linalg.norm(mtx1)
-    norm2 = np.linalg.norm(mtx2)
-    # print(norm1,norm2)
-    if norm1 == 0 or norm2 == 0:
-        raise ValueError("Input matrices must contain >1 unique points")
-
-    # change scaling of data (in rows) such that trace(mtx*mtx') = 1
-    mtx1 /= norm1
-    mtx2 /= norm2
-
-    # transform mtx2 to minimize disparity
-    R, s = orthogonal_procrustes_np(mtx1, mtx2)
-    mtx2 = np.dot(mtx2, R.T) * s
-
-    # measure the dissimilarity between the two datasets
-
-    if return_mat:
-        return mtx1, mtx2
-    else:
-        disparity = np.sum(np.square(mtx1 - mtx2))
-        return disparity
+from geomloss import SamplesLoss
 
 
 # from deepdrawing, function used in function criterion_procrustes
@@ -93,7 +22,7 @@ def orthogonal_procrustes_torch(A, B):
     return R, scale
 
 
-def criterion_procrustes(pos_1, pos_2, return_mat=False):
+def criterion_procrustes(pos_1, pos_2, return_mat=  False):
     device = pos_1.device
     mtx1 = pos_1
     mtx2 = pos_2.clone().to(device)
@@ -127,90 +56,7 @@ def criterion_procrustes(pos_1, pos_2, return_mat=False):
         return disparity
 
 
-def hausdorff_test(data1, data2, return_mat=False):
-    mtx1 = np.array(data1, dtype=np.double, copy=True)
-    mtx2 = np.array(data2, dtype=np.double, copy=True)
-
-    if mtx1.ndim != 2 or mtx2.ndim != 2:
-        raise ValueError("Input matrices must be two-dimensional")
-    if mtx1.shape != mtx2.shape:
-        raise ValueError("Input matrices must be of same shape")
-    if mtx1.size == 0:
-        raise ValueError("Input matrices must be >0 rows and >0 cols")
-
-    # translate all the data to the origin
-    mtx1 -= np.mean(mtx1, 0)
-    mtx2 -= np.mean(mtx2, 0)
-    # print("manual norm")
-    norm1 = np.linalg.norm(mtx1)
-    norm2 = np.linalg.norm(mtx2)
-    # print(norm1,norm2)
-    if norm1 == 0 or norm2 == 0:
-        raise ValueError("Input matrices must contain >1 unique points")
-
-    # change scaling of data (in rows) such that trace(mtx*mtx') = 1
-    mtx1 /= norm1
-    mtx2 /= norm2
-
-    # transform mtx2 to minimize disparity
-    R, s = orthogonal_procrustes_np(mtx1, mtx2)
-    mtx2 = np.dot(mtx2, R.T) * s
-
-    # measure the dissimilarity between the two datasets
-
-    if return_mat:
-        return mtx1, mtx2
-    else:
-        disparity = directed_hausdorff(mtx1, mtx2)[0]
-        return disparity
-
-
-def norm_stress(coords, gtds, stress_alpha = 2):
-
-    with np.errstate(divide = 'ignore'):
-        # compute the weights and set the numbers that turned to infinity (the 0 on the diagonals) to 0
-        weights = np.array(gtds).astype(float) ** -stress_alpha
-        weights[weights == float('inf')] = 0
-
-    n = len(coords)
-    # calculate the euclidean distances
-    eucl_dis = np.sqrt(np.sum(((np.expand_dims(coords, axis = 1) - coords) ** 2), 2))
-    # scale the coordinates
-    scal_coords = coords * (np.nansum((eucl_dis / gtds) / np.nansum((eucl_dis ** 2) / (gtds ** 2))))
-
-    # compute the euclidean distances again according to scaled coordinates
-    eucl_dis_new = np.sqrt(np.sum(((np.expand_dims(scal_coords, axis=1) - scal_coords) ** 2), 2))
-
-    # compute stress
-    stress_tot = np.sum(weights * ((eucl_dis_new - gtds) ** 2)) / (n ** 2 - n)
-    ns = stress_tot
-
-    return ns
-
-
-def norm_stress_torch(coords, gtds, stress_alpha = 2):
-
-    with np.errstate(divide = 'ignore'):
-        # compute the weights and set the numbers that turned to infinity (the 0 on the diagonals) to 0
-        weights = torch.tensor(gtds).float() ** -stress_alpha
-        weights[weights == float('inf')] = 0
-
-    n = len(coords)
-    # calculate the euclidean distances
-    eucl_dis = torch.sqrt(torch.sum(((torch.unsqueeze(coords, dim = 1) - coords) ** 2), 2))
-    # scale the coordinates
-    scal_coords = coords * (torch.nansum((eucl_dis / gtds) / torch.nansum((eucl_dis ** 2) / (gtds ** 2))))
-
-    # compute the euclidean distances again according to scaled coordinates
-    eucl_dis_new = torch.sqrt(torch.sum(((torch.unsqueeze(scal_coords, dim = 1) - scal_coords) ** 2), 2))
-
-    # compute stress
-    stress_tot = torch.sum(weights * ((eucl_dis_new - gtds) ** 2)) / (n ** 2 - n)
-    ns = stress_tot
-
-    return ns
-
-
+# wasserstein distance
 def wasserstein_test(pos_1, pos_2):
 
     x0, x1 = translate_scale(pos_1, pos_2)
@@ -218,18 +64,18 @@ def wasserstein_test(pos_1, pos_2):
     return wasserstein_distance_nd(x0, x1)
 
 
-from geomloss import SamplesLoss
 lossf_wasserstein = SamplesLoss(loss = 'sinkhorn', p = 2, blur = 0.001)
 
 
-def wasserstein_test2(pos_1, pos_2):
+# sinkhorn approximation of wasserstein distance
+def sinkhorn_approx(pos_1, pos_2):
 
     x0, x1 = translate_scale(pos_1, pos_2)
 
     return lossf_wasserstein(x0, x1)
 
 
-def stat_metric(pos_1, pos_2):
+def similarity(pos_1, pos_2):
 
     x0, x1 = translate_scale(pos_1, pos_2)
     i = 0
@@ -272,26 +118,35 @@ def translate_scale(x0, x1):
     return mtx3, mtx4
 
 
-def edge_lengths_sdv2(coords, edges):
+def norm_stress_torch(coords, args, stress_alpha=2):
 
-    # get the euclidean distances
-    eucl_dis = np.sqrt(np.sum(((np.expand_dims(coords, axis = 1) - coords) ** 2), 2))
+    graph, gtds, edges = args
 
-    # now only get the euclidean distances of the edges
-    edge_dis = eucl_dis[np.array(edges)[:, 0], np.array(edges)[:, 1]]
+    with np.errstate(divide='ignore'):
+        # compute the weights and set the numbers that turned to infinity (the 0 on the diagonals) to 0
+        weights = torch.tensor(gtds).float() ** -stress_alpha
+        weights[weights == float('inf')] = 0
 
-    mu = np.mean(edge_dis)
+    n = len(coords)
+    # calculate the euclidean distances
+    eucl_dis = torch.sqrt(torch.sum(((torch.unsqueeze(coords, dim=1) - coords) ** 2), 2))
+    # scale the coordinates
+    scal_coords = coords * (torch.nansum((eucl_dis / gtds) / torch.nansum((eucl_dis ** 2) / (gtds ** 2))))
 
-    # best edge length standard deviation is 0
-    # so turn this around so that the best el value is 1
-    el = np.sqrt(np.mean((edge_dis - mu)**2))
+    # compute the euclidean distances again according to scaled coordinates
+    eucl_dis_new = torch.sqrt(torch.sum(((torch.unsqueeze(scal_coords, dim=1) - scal_coords) ** 2), 2))
 
-    return el
+    # compute stress
+    stress_tot = torch.sum(weights * ((eucl_dis_new - gtds) ** 2)) / (n ** 2 - n)
+    ns = stress_tot
+
+    return ns
 
 
-def edge_lengths_sd_torch(coords_2d, edges):
+def edge_lengths_sd_torch(coords, args):
 
-    edge_coords = coords_2d[edges]
+    graph, gtds, edges = args
+    edge_coords = coords[edges]
     edge_coords = edge_coords.reshape(edge_coords.shape[0], 4)
 
     # calculate the euclidean distances
@@ -304,52 +159,11 @@ def edge_lengths_sd_torch(coords_2d, edges):
 
     return el
 
-# def crossings_number_v2(coords, gtds):
-#
-#     # construct a graph from the shortest path matrix
-#     adj_matrix = copy.deepcopy(gtds)
-#     adj_matrix[adj_matrix > 1] = 0
-#     graph = nx.from_numpy_array(adj_matrix)
-#     graph = nx.convert_node_labels_to_integers(graph)
-#
-#     edges = np.array(list(graph.edges()))
-#     m = len(edges)
-#
-#     edge_coords = coords[edges]
-#     edge_coords = edge_coords.reshape(m, 4)
-#     # turn it into a torch tensor since we do the same thing when using the MLP down below
-#     edge_coords = torch.tensor(edge_coords)
-#
-#     # do some matrix repetition so that we can get edge pairs later
-#     matrix_repeated_rows = edge_coords.repeat(m, 1)
-#     matrix_repeated_cols = edge_coords.repeat_interleave(m, axis = 0)
-#
-#     # mask to filter out self edge comparisons
-#     indices = torch.arange(m)
-#     row_indices = indices.repeat_interleave(m)
-#     col_indices = indices.repeat(m)
-#     mask = row_indices != col_indices
-#
-#     filtered_rows = matrix_repeated_rows[mask]
-#     filtered_cols = matrix_repeated_cols[mask]
-#
-#     p = torch.cat((filtered_rows, filtered_cols), dim=1)
-#
-#     cross_bool = cross_pairs(p)
-#
-#     cnt = torch.sum(cross_bool)
-#     end_cnt = cnt / 2  # duplicate comparisons done, divide by half to get the actual crossings
-#     cr_poss = m * (m - 1) / 2
-#     degrees = torch.tensor(list(dict(graph.degree()).values()))
-#     cr_imp = torch.sum(degrees * (degrees - 1)) / 2
-#
-#     cn = 1 - (end_cnt / (cr_poss - cr_imp)).item()
-#
-#     return cn
-
 
 # taken from sgd^2 https://github.com/tiga1231/graph-drawing/blob/sgd/neural-crossing-detector.ipynb
-def cross_pairs(coords, edges):
+def cross_pairs(coords, args):
+
+    graph, gtds, edges = args
 
     m = len(edges)
     edge_coords = coords[edges]
@@ -392,12 +206,9 @@ def cross_pairs(coords, edges):
     return torch.sum(cross_bool)
 
 
-def angular_resolution_dev(coords, gtds):
+def angular_resolution_dev(coords, args):
 
-    adj_matrix = copy.deepcopy(gtds)
-    adj_matrix[adj_matrix > 1] = 0
-    graph = nx.from_numpy_array(adj_matrix)
-    graph = nx.convert_node_labels_to_integers(graph)
+    graph, gtds, edges = args
 
     # initialize variables
     n = graph.number_of_nodes()
@@ -419,7 +230,6 @@ def angular_resolution_dev(coords, gtds):
             sub_phi = (np.arctan2(norm_sub[:, 1:2], norm_sub[:, :1]) * 180 / np.pi)
             # get the degrees to positive 0-360
             sub_phi = ((sub_phi + 360) % 360).flatten()
-
 
             # compare the last edge with the first edge
             first = sub_phi[0]
