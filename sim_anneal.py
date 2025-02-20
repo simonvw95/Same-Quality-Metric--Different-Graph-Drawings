@@ -30,7 +30,7 @@ def perturb_torch(coords):
 def sim_anneal_torch(x0, args, args_qm, start_temp, max_N, abs_diff = 0.0075):
 
     # args for simulated annealing
-    tar_coords, tar_value, qm_func, G = args
+    tar_coords, tar_value, qm_func = args
     # copy the starting coordinates and compute the similarity
     new_sol = x0.clone()
     curr_loss_sim = torch.tensor(qm.similarity(x0, tar_coords))
