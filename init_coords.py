@@ -33,7 +33,7 @@ def save_res(pos, G, graph_name, title):
 
     plt.title(title, fontsize = 10)
     pos_G = {k: pos[k] for k in range(len(pos))}
-    nx.draw(G, with_labels=False, pos=pos_G, node_size=16, edge_color = ['lightblue'], width = 1)
+    nx.draw(G, with_labels = False, pos = pos_G, node_size = 16, edge_color = ['lightblue'], width = 1)
     plt.savefig('results/init-{}.png'.format(graph_name), dpi = 400)
     plt.close('all')
 
@@ -42,14 +42,17 @@ def save_res(pos, G, graph_name, title):
 
 
 if __name__ is '__main__':
+
     # loop over all the graphs in your dataset
     graphs = ['bar_albert_gen', 'polbooks', 'gams10am', 'dwt_307', 'lnsp_131']
+
     for graph in graphs:
+
         print('doing {}'.format(graph))
+
         # load edgelist
         edl = np.loadtxt('data/edgelists/{}-edgelist.csv'.format(graph), delimiter = ',').astype(np.int64)
 
-        # long step to keep node labelling consistent and gtds consistent
         temp_G = nx.Graph()
         edgelist = []
         for e in edl:
@@ -59,7 +62,7 @@ if __name__ is '__main__':
         G = nx.convert_node_labels_to_integers(temp_G)
         G.remove_edges_from(nx.selfloop_edges(G))
 
-        pos_dict = nx.forceatlas2_layout(G, max_iter=5000)
+        pos_dict = nx.forceatlas2_layout(G, max_iter = 5000)
 
         pos = np.array([[float(pos_dict[k][0]), float(pos_dict[k][1])] for k in pos_dict])
 

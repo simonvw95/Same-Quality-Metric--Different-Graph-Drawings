@@ -17,7 +17,7 @@ Change the 'n' variable to lower or increase the number of points in the target 
 def save_res(pos, G, full_name):
 
     pos_G = {k: pos[k] for k in range(len(pos))}
-    nx.draw(G, with_labels=False, pos=pos_G, node_size=16, edge_color = ['lightblue'], width = 0.5, node_color = ['black'])
+    nx.draw(G, with_labels = False, pos = pos_G, node_size = 16, edge_color = ['lightblue'], width = 0.5, node_color = ['black'])
     plt.xlim(-0.01, 1.01)
     plt.ylim(-0.01, 1.01)
     plt.axis('off')

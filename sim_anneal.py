@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 import metrics as qm
 
-np.seterr(divide='ignore', invalid='ignore')
+np.seterr(divide = 'ignore', invalid = 'ignore')
 warnings.filterwarnings("ignore")
 
 
@@ -106,7 +106,7 @@ def save_res(coords, G, graph_name, metric_name, title):
     # convert nodes to dictionary for networkx
     pos_G = {k: list(pos[k]) for k in G.nodes()}
     pos_G = {k : [pos_G[k][0].item(), pos_G[k][1].item()] for k in pos_G}
-    nx.draw(G, with_labels=False, pos=pos_G, node_size=16, edge_color = ['lightblue'], width = 1)
+    nx.draw(G, with_labels = False, pos = pos_G, node_size = 16, edge_color = ['lightblue'], width = 1)
     plt.savefig('results/{}{}.png'.format(graph_name, metric_name))
     plt.close('all')
 

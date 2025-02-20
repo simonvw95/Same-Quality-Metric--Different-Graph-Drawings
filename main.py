@@ -40,7 +40,7 @@ if __name__ == '__main__':
         print('Starting with: {}'.format(graph))
 
         # load the graph
-        edl = np.loadtxt('data/edgelists/{}-edgelist.csv'.format(graph), delimiter=',').astype(np.int64)
+        edl = np.loadtxt('data/edgelists/{}-edgelist.csv'.format(graph), delimiter = ',').astype(np.int64)
         G = nx.Graph()
 
         edgelist = []
@@ -54,7 +54,7 @@ if __name__ == '__main__':
         n = G.number_of_nodes()
 
         # load the start coordinates X and generate the target coordinates Y
-        og_pos = torch.tensor(np.loadtxt('data/start_coords/{}.csv'.format(graph), delimiter=',', dtype=np.float64)).float()
+        og_pos = torch.tensor(np.loadtxt('data/start_coords/{}.csv'.format(graph), delimiter = ',', dtype=np.float64)).float()
         np.random.seed(1337)
         targets_pos = [ts.circle_pos(n), ts.dinosaur(n), ts.lines(n = n, vert = True), ts.lines(n = n, vert = False), ts.cross(n), ts.grid(n)]
         targets_names = dict(zip(['circle', 'dinosaur', 'vert-lines', 'hor-lines', 'cross', 'grid'], targets_pos))
