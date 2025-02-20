@@ -2,8 +2,9 @@
 
 # Running instructions
 
-Python version 3.10.4 \
-Install packages with: 'pip install -r requirements.txt' \
+Python version 3.10.4
+
+Install packages with: 'pip install -r requirements.txt'
 
 ### Minimal example
 With a single git clone (make sure you use git lfs to properly clone the csv files or dowload the csv files manually), the tool should be usable for three example graphs provided in the GitHub repository. 
