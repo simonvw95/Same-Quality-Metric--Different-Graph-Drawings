@@ -41,7 +41,7 @@ def save_res(pos, G, graph_name, title):
     np.savetxt('data/start_coords/{}.csv'.format(graph_name), pos, delimiter = ',')
 
 
-if __name__ is '__main__':
+if __name__ == '__main__':
 
     # loop over all the graphs in your dataset
     graphs = ['bar_albert_gen', 'polbooks', 'gams10am', 'dwt_307', 'lnsp_131']
