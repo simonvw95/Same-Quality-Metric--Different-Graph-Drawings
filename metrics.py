@@ -1,28 +1,47 @@
 import numpy as np
-import networkx as nx
-import copy
 import torch
 
 from scipy.stats import wasserstein_distance_nd
 from geomloss import SamplesLoss
 
 
-# from deepdrawing, function used in function criterion_procrustes
+"""
+Helper function for the Procrustes Statistic
+"""
+
+
 def orthogonal_procrustes_torch(A, B):
+
     # Be clever with transposes, with the intention to save memory.
     A_device = A.device
     B_copy = B.clone().to(A_device)
 
     input = torch.transpose(torch.matmul(torch.transpose(B_copy, 0, 1), A), 0, 1)
     u, w, vt = torch.svd(input)
-    # u, w, vt = torch.svd(torch.transpose(torch.matmul(torch.transpose(B,0,1),A),0,1))
     R = torch.matmul(u, torch.transpose(vt, 0, 1))
     scale = torch.sum(w)
 
     return R, scale
 
 
-def criterion_procrustes(pos_1, pos_2, return_mat=  False):
+"""
+Procrustes Statistic that computes the (dis)similarity between two input matrices including translation, rotation and scaling
+Unused in the current paper. Taken from DeepDrawing github: 'https://github.com/jiayouwyhit/deepdrawing'
+
+Input
+pos_1:      torch.tensor, the coordinates of the first matrix
+pos_2:      torch.tensor, the coordinates of a second matrix
+return_mat  bool, if we want to return the translated, rotated and scaled matrices
+
+Output
+mtx3, mtx4: torch.tensors, rotated translated and scaled matrices of input matrices, if return_mat is True
+disparity:  torch.tensor, float of the Procustes Statistic result, 0 is completely the same coordinates, 1 completely dissimilar
+
+
+"""
+
+
+def criterion_procrustes(pos_1, pos_2, return_mat = False):
     device = pos_1.device
     mtx1 = pos_1
     mtx2 = pos_2.clone().to(device)
@@ -56,45 +75,107 @@ def criterion_procrustes(pos_1, pos_2, return_mat=  False):
         return disparity
 
 
-# wasserstein distance
+"""
+Wasserstein distance that computes the (dis)similarity between two input matrices
+
+Input
+pos_1:      torch.tensor, the coordinates of the first matrix
+pos_2:      torch.tensor, the coordinates of a second matrix
+
+Output
+wd:         torch.tensor, a float value of how close the two matrices are, min value is 0
+
+"""
+
+
 def wasserstein_test(pos_1, pos_2):
 
     x0, x1 = translate_scale(pos_1, pos_2)
 
-    return wasserstein_distance_nd(x0, x1)
+    wd = wasserstein_distance_nd(x0, x1)
+
+    return wd
 
 
 lossf_wasserstein = SamplesLoss(loss = 'sinkhorn', p = 2, blur = 0.001)
 
 
-# sinkhorn approximation of wasserstein distance
+"""
+Sinkhorn approximation of the Wasserstein distance that computes the (dis)similarity between two input matrices
+
+Input
+pos_1:      torch.tensor, the coordinates of the first matrix
+pos_2:      torch.tensor, the coordinates of a second matrix
+
+Output
+sh_dis:     torch.tensor, a float value of how close the two matrices are, min value is 0
+
+"""
+
+
 def sinkhorn_approx(pos_1, pos_2):
 
     x0, x1 = translate_scale(pos_1, pos_2)
 
-    return lossf_wasserstein(x0, x1)
+    sh_dis = lossf_wasserstein(x0, x1)
+
+    return sh_dis
+
+
+"""
+Similarity Function that computes the (dis)similarity between two input matrices
+
+Input
+pos_1:      torch.tensor, the coordinates of the first matrix
+pos_2:      torch.tensor, the coordinates of a second matrix
+
+Output
+all_dis:    torch.tensor, a float value of how close the two matrices are, min value is 0
+
+"""
 
 
 def similarity(pos_1, pos_2):
 
+    # translate and scale the coordinates
     x0, x1 = translate_scale(pos_1, pos_2)
+
+    # initialize variables
     i = 0
     n = x0.shape[0]
     all_dis = torch.tensor(0).float()
+
     while n > 0:
+
+        # compute the current distances from node 0 to all other nodes in the target node coordinates
         curr_dis = torch.sqrt(torch.sum((x0[i] - x1) ** 2, 1))
-        # idx of the closest
+
         closeness = torch.min(curr_dis, dim = 0, keepdim = False)
 
+        # get the index of the closest and the distance to the closest
         all_dis += closeness.values
         close_idx = closeness.indices.item()
 
+        # remove index 0 from the x0 and the index of the closest node in thet target node coordinates x1 (by exclusion)
         x1 = torch.cat((x1[:close_idx], x1[close_idx + 1:]))
-
         x0 = torch.cat((x0[:0], x0[0 + 1:]))
+
         n = x0.shape[0]
 
     return all_dis
+
+
+"""
+Helper function that translates two input coordinates for x and y and then scales between [0,1]
+
+Input
+x0:         torch.tensor, the coordinates of the first matrix
+x1:         torch.tensor, the coordinates of a second matrix
+
+Output
+mtx3:       torch.tensor, scaled and translated coordinates of the first matrix
+mtx4:       torch.tensor, scaled and translated coordinates of the second matrix
+"""
 
 
 def translate_scale(x0, x1):
@@ -118,29 +199,52 @@ def translate_scale(x0, x1):
     return mtx3, mtx4
 
 
+"""
+Quality Metric Function that computes Stress
+Input
+coords:         torch.tensor, the coordinates of nodes
+args:           list, a list of arguments in the following order: [networkx Graph object, np.array of all shortest paths lengths, np.array of edges from Graph object]
+stress_alpha:   int, a weighting factor set to default value of 2
+
+Output
+ns:             float, normalized stress value with 0 being best and 1 being worst
+"""
+
+
 def norm_stress_torch(coords, args, stress_alpha=2):
 
     graph, gtds, edges = args
 
-    with np.errstate(divide='ignore'):
+    with np.errstate(divide = 'ignore'):
         # compute the weights and set the numbers that turned to infinity (the 0 on the diagonals) to 0
         weights = torch.tensor(gtds).float() ** -stress_alpha
         weights[weights == float('inf')] = 0
 
     n = len(coords)
     # calculate the euclidean distances
-    eucl_dis = torch.sqrt(torch.sum(((torch.unsqueeze(coords, dim=1) - coords) ** 2), 2))
+    eucl_dis = torch.sqrt(torch.sum(((torch.unsqueeze(coords, dim = 1) - coords) ** 2), 2))
     # scale the coordinates
     scal_coords = coords * (torch.nansum((eucl_dis / gtds) / torch.nansum((eucl_dis ** 2) / (gtds ** 2))))
 
     # compute the euclidean distances again according to scaled coordinates
-    eucl_dis_new = torch.sqrt(torch.sum(((torch.unsqueeze(scal_coords, dim=1) - scal_coords) ** 2), 2))
+    eucl_dis_new = torch.sqrt(torch.sum(((torch.unsqueeze(scal_coords, dim = 1) - scal_coords) ** 2), 2))
 
     # compute stress
     stress_tot = torch.sum(weights * ((eucl_dis_new - gtds) ** 2)) / (n ** 2 - n)
     ns = stress_tot
 
     return ns
+
+
+"""
+Quality Metric Function that computes Edge Length Deviation
+Input
+coords:         torch.tensor, the coordinates of nodes
+args:           list, a list of arguments in the following order: [networkx Graph object, np.array of all shortest paths lengths, np.array of edges from Graph object]
+
+Output
+el:             float, edge length deviation value with 0 being best and 1 being worst
+"""
 
 
 def edge_lengths_sd_torch(coords, args):
@@ -158,6 +262,17 @@ def edge_lengths_sd_torch(coords, args):
     el = torch.sqrt(torch.mean((eucl_dis - mu) ** 2))
 
     return el
+
+
+"""
+Quality Metric Function that computes total Number of Crossings
+Input
+coords:         torch.tensor, the coordinates of nodes
+args:           list, a list of arguments in the following order: [networkx Graph object, np.array of all shortest paths lengths, np.array of edges from Graph object]
+
+Output
+cn:             int, number of crossings with 0 being best
+"""
 
 
 # taken from sgd^2 https://github.com/tiga1231/graph-drawing/blob/sgd/neural-crossing-detector.ipynb
@@ -203,7 +318,20 @@ def cross_pairs(coords, args):
         torch.logical_and(0 < beta, beta < 1),
     )
 
-    return torch.sum(cross_bool)
+    cn = torch.sum(cross_bool)
+
+    return cn
+
+
+"""
+Quality Metric Function that computes Angular Resolution Deviation
+Input
+coords:         torch.tensor, the coordinates of nodes
+args:           list, a list of arguments in the following order: [networkx Graph object, np.array of all shortest paths lengths, np.array of edges from Graph object]
+
+Output
+ar:             float, angular resolution deviation value with 0 being best and 1 being worst
+"""
 
 
 def angular_resolution_dev(coords, args):
@@ -259,7 +387,6 @@ def angular_resolution_dev(coords, args):
     ar = np.mean(all_angles)
 
     return ar
-
 
 
 """
