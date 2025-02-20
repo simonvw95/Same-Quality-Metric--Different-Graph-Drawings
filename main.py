@@ -6,9 +6,9 @@ import os
 import metrics as qm
 import target_gen as ts
 
-# sim_anneal uses the similarity function as described in the paper, sim_anneal_wasserstein uses the wasserstein distance and sinkhorn
+# sim_anneal uses the similarity function as described in the paper, sim_anneal_wasserstein uses the wasserstein distance and sinkhorn approximation
 from sim_anneal import save_res, sim_anneal_torch
-# from sim_anneal_wasserstein save_res, sim_anneal_torch
+# from sim_anneal_wasserstein import save_res, sim_anneal_torch
 
 
 """
@@ -25,6 +25,7 @@ Change the import to sim_anneal_wasserstein if you want to use the Wasserstein D
 
 
 if __name__ == '__main__':
+
     # enter the graphs that you would like to fool, their edgelists should be put in the data/edgeslists/ folder
     # their coordinates should be put in the data/start_coords/ folder
     graphs = ['bar_albert_gen', 'polbooks', 'gams10am', 'dwt_307', 'lnsp_131']
@@ -67,7 +68,6 @@ if __name__ == '__main__':
             # get the initial quality metric value we want to get close to qm_0
             args_qm = [G, gtds, np.array(G.edges())]
             qm_target = metric_dict[metric](og_pos, args_qm)
-            print(qm_target)
 
             # setting epsilon, the margin that the metric can change
             if metric == 'CN':
@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
                     print('Replicating shape {}'.format(target))
                     tar_pos = torch.tensor(targets_names[target]).float()
-                    args = [tar_pos, qm_target, metric]
+                    args = [tar_pos, qm_target, metric_dict[metric]]
 
                     # main simulated annealing loop, adjust variables here if necessary (start_temp and max_N)
                     result = sim_anneal_torch(x0 = og_pos, args = args, args_qm = args_qm, start_temp = 0.4, max_N = 30000, abs_diff = abs_diff)
