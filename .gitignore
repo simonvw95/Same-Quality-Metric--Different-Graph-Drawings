@@ -132,5 +132,3 @@ dmypy.json
 venv
 *.zip
 *.log
-data
-results
