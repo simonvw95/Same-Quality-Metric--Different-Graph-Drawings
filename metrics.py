@@ -209,6 +209,7 @@ def cross_pairs(coords, args):
 def angular_resolution_dev(coords, args):
 
     graph, gtds, edges = args
+    coords = np.array(coords)
 
     # initialize variables
     n = graph.number_of_nodes()
