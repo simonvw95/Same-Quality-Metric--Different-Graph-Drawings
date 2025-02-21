@@ -7,7 +7,7 @@ Python version 3.10.4
 Install packages with: 'pip install -r requirements.txt'
 
 ### Minimal example
-With a single git clone (make sure you use git lfs to properly clone the csv files or dowload the csv files manually), the tool should be usable for three example graphs provided in the GitHub repository. 
+With a single git clone (make sure you use git lfs to properly clone the csv files (in /data/) or dowload the csv files manually) 
 
 If you'd like to simply try out the algorithm and reproduce the paper's results, only concern yourself with the given example data in /data/, run **main.py** and subsequently **final_drawings.py**.
 
