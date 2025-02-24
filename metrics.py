@@ -386,7 +386,7 @@ def angular_resolution_dev(coords, args):
 
     ar = np.mean(all_angles)
 
-    return ar
+    return torch.tensor(ar).float()
 
 
 """
