@@ -7,16 +7,16 @@ Python version 3.10.4
 Install packages with: 'pip install -r requirements.txt'
 
 ### Minimal example
-With a single git clone (make sure you use git lfs to properly clone the csv files (in /data/) or dowload the csv files manually) 
+With a single git clone (make sure you use git lfs to properly clone the csv files (in /data/) or dowload the csv files manually) you can start spoofing metrics on any target shape and graph.
 
 If you'd like to simply try out the algorithm and reproduce the paper's results, only concern yourself with the given example data in /data/, run **main.py** and subsequently **final_drawings.py**.
 
 1. Before you try to start spoofing the graph drawings, ensure the following are correct.
-- Have your edgelist(s) in /data/edgelists/; for the correct format see one of the example graphs
+- Have your edgelist(s) in /data/edgelists/; for the correct format see one of the example graphs in /data/edgelists/
 - Either have your starting coordinates in /data/start_coords/ OR run **init_coords.py** to generate coordinates and initial drawings
 2. Run **main.py** to morph starting drawings into target shapes
-- Adjust **main.py** to reduce or incease the number of graphs/target shapes/metrics.
--  You can also adjust the parameter values such as the starting temperature T, quality metric difference, number of iterations, max amount of time give to the algorithm
+- Adjust **main.py** to reduce or increase the number of graphs/target shapes/metrics.
+-  You can also adjust the parameter values such as the starting temperature T, quality metric difference epsilon, number of iterations, max amount of time give to the algorithm
 3. Once the algorithm has generated new coordinates close to the target shapes for your input graphs, run **final_drawings.py** to produce .pdf images of your resulting spoofed drawings.
 
 ## Explanations other python files
@@ -51,8 +51,10 @@ The initial drawing of a Barabasi-Albert graph with the following quality metric
 ![](example_figures/ba_rr-init.png)
 The target video:
 ![](example_figures/output_rr.gif)
+
 The recreated videos with the metric kept the same
-![](example_figures/rr-ba_rr-ST.gif)
-![](example_figures/rr-ba_rr-ELD.gif)
-![](example_figures/rr-ba_rr-CN.gif)
-![](example_figures/rr-ba_rr-AR.gif)
+
+<img src="example_figures/rr-ba_rr-ST.gif" width="425"/> <img src="example_figures/rr-ba_rr-ELD.gif" width="425"/>
+
+
+<img src="example_figures/rr-ba_rr-CN.gif" width="425"/> <img src="example_figures/rr-ba_rr-AR.gif" width="425"/>
