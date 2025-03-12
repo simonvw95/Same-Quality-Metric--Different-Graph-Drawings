@@ -44,3 +44,15 @@ For the following six target shapes we spoof 5 graphs ('bar-albert, 'polbooks', 
 ![](example_figures/header_github.png)
 ![](example_figures/part2_github.png)
 ![](example_figures/part3_github.png)
+
+## Reproducing a Video
+From a reference video, we use each frame as a target shape while keeping a metric the same
+The initial drawing of a Barabasi-Albert graph with the following quality metric values:
+![](example_figures/ba_rr-init.png)
+The target video:
+![](example_figures/output_rr.gif)
+The recreated videos with the metric kept the same
+![](example_figures/rr-ba_rr-ST.gif)
+![](example_figures/rr-ba_rr-ELD.gif)
+![](example_figures/rr-ba_rr-CN.gif)
+![](example_figures/rr-ba_rr-AR.gif)
