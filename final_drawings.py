@@ -50,6 +50,9 @@ if __name__ == '__main__':
         targets_names = ['circle', 'dinosaur', 'vert-lines', 'hor-lines', 'cross', 'grid', 'init']
         metric_names = ['ELD', 'ST', 'CN', 'AR']
 
+        # COMBS METRICS
+        metric_names = ['ST-AR-CN-ELD', 'ST-AR-ELD', 'ST-AR-CN', 'ST-CN-ELD', 'AR-CN-ELD', 'AR-CN', 'AR-ELD', 'CN-ELD', 'ST-AR', 'ST-CN', 'ST-ELD']
+
         for metric in metric_names:
 
             for target in targets_names:
