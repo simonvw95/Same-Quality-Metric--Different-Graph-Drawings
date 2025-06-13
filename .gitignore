@@ -132,3 +132,4 @@ dmypy.json
 venv
 *.zip
 *.log
+/results/final_simvals/
