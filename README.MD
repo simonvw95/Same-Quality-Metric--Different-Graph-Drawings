@@ -32,7 +32,7 @@ information on the quality metric values of the initial drawings in /results/
 
 **metrics.py**: Collection of quality metric functions and similarity functions
 
-**rr_main.py**: Main script to start morphing existing graph drawings into target shapes acquired from a given video. The given video, and the script that extracts the frames is in the /rickroll/ folder.
+**rr_main.py**: Main script to start morphing existing graph drawings into target shapes acquired from a given video. The given video, and the script that extracts the frames is in the /rickroll/ folder. The original .gif was acquired from https://zepsilon.wordpress.com/2016/01/06/animating-the-rick-roll/. This script removes color from each frame, then extracts the lines in each frame and turns them into a set number of points.
 
 **rr_final_drawings.py**: Script to produce the final .pdf drawings of all the morphed drawings produced by the **rr_main.py** script. Only works if you have the coordinates of your results.
 
