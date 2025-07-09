@@ -34,7 +34,7 @@ information on the quality metric values of the initial drawings in /results/
 
 **rr_main.py**: Main script to start morphing existing graph drawings into target shapes acquired from a given video. The given video, and the script that extracts the frames is in the /rickroll/ folder. The original .gif was acquired from https://zepsilon.wordpress.com/2016/01/06/animating-the-rick-roll/. This script removes color from each frame, then extracts the lines in each frame and turns them into a set number of points.
 
-**rr_final_drawings.py**: Script to produce the final .pdf drawings of all the morphed drawings produced by the **rr_main.py** script. Only works if you have the coordinates of your results.
+**rr_final_drawings.py**: Script to produce the final .pdf drawings of all the morphed drawings produced by the rr_main.py script. Only works if you have the coordinates of your results.
 
 **sim_anneal_mult.py**: Script of the main algorithm with the similarity function described in the paper
 
@@ -42,7 +42,7 @@ information on the quality metric values of the initial drawings in /results/
 
 **target_shapes.py**: Script to produce .pdf images of all the target coordinates (not graph drawings) of your target shapes, currently set number of points is 142
 
-# Deprecated scripts
+### Deprecated scripts
 **main.py**: Script to start morphing existing graph drawings into target shapes, only works for a single metric. Adjust lines of code in here for different metrics
 
 **sim_anneal.py**: Script of the main algorithm with the similarity function described in the paper, only works for a single metric.
