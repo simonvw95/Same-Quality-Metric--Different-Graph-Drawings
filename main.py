@@ -12,6 +12,7 @@ from sim_anneal import save_res, sim_anneal_torch
 
 
 """
+DEPRECATED CODE, USE main_mult.py
 Main script to start morphing existing graph drawings into target shapes
  
 Before you run this make sure you have existing edgelists and their coordinates in /data/edgelists/ and data/start_coords/, respectively
