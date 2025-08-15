@@ -109,7 +109,7 @@ if __name__ == '__main__':
                 args = [tar_pos, qm_targets, qm_funcs]
 
                 # main simulated annealing loop, adjust variables here if necessary (start_temp and max_N)
-                result = sim_anneal_mult(x0=og_pos, args=args, args_qm=args_qm, start_temp=0.4, max_N=300, abs_diffs=abs_diffs)
+                result = sim_anneal_mult(x0=og_pos, args=args, args_qm=args_qm, start_temp=0.4, max_N=30000, abs_diffs=abs_diffs)
 
                 print('Similarity: {}'.format(str(round(result['sim'].item(), 4))))
                 print('Target QM val: {}'.format(str(result['qm_og'].numpy().round(4))))
