@@ -12,7 +12,7 @@ import metrics as qm
 np.seterr(divide = 'ignore', invalid = 'ignore')
 warnings.filterwarnings("ignore")
 
-# DEPRECATED CODE, USE sim_mult.py
+# DEPRECATED CODE, USE sim_anneal_mult.py
 
 
 def perturb_torch(coords):
