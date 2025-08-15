@@ -4,7 +4,7 @@ import numpy as np
 import os
 import re
 
-import metrics as qm
+import metrics as qmf
 from sim_anneal_mult import save_res, sim_anneal_mult
 
 
@@ -35,7 +35,7 @@ if __name__ == '__main__':
     graphs = ['ba_rr']
 
     # list the metrics and their names that you want to compute
-    metrics = [qm.edge_lengths_sd_torch, qm.norm_stress_torch, qm.cross_pairs, qm.angular_resolution_dev]
+    metrics = [qmf.edge_lengths_sd_torch, qmf.norm_stress_torch, qmf.cross_pairs, qmf.angular_resolution_dev]
     metric_names = ['ELD', 'ST', 'CN', 'AR']
     metric_dict = dict(zip(metric_names, metrics))
 

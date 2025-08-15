@@ -3,7 +3,7 @@ import networkx as nx
 import numpy as np
 import os
 
-import metrics as qm
+import metrics as qmf
 import target_gen as ts
 
 # sim_anneal uses the similarity function as described in the paper, sim_anneal_wasserstein uses the wasserstein distance and sinkhorn approximation
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     graphs = ['bar_albert_gen', 'polbooks', 'gams10am', 'dwt_307', 'lnsp_131']
 
     # list the metrics and their names that you want to compute, select the combinations down below
-    metrics = [qm.edge_lengths_sd_torch, qm.norm_stress_torch, qm.cross_pairs, qm.angular_resolution_dev]
+    metrics = [qmf.edge_lengths_sd_torch, qmf.norm_stress_torch, qmf.cross_pairs, qmf.angular_resolution_dev]
     metric_names = ['ELD', 'ST', 'CN', 'AR']
     metric_dict = dict(zip(metric_names, metrics))
 
