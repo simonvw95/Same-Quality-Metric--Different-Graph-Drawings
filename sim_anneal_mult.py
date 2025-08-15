@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import warnings
+import json
 
 from tqdm import tqdm
 
@@ -27,7 +28,7 @@ def perturb_torch(coords):
     return new_coords
 
 
-def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs):
+def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs, name_parts = None):
 
     # args for simulated annealing
     tar_coords, tar_values, qm_funcs = args
@@ -45,6 +46,20 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs):
     print('\nStart with a Similarity of: ' + str(round(curr_loss_sim.item(), 4)))
     start = time.time()
     i = 0
+
+    # init json if we want to keep track of the changes every 10 iterations
+    json_name = None
+    if name_parts:
+        tar_folder = name_parts[0]
+        graph_name = name_parts[1]
+        target_name = name_parts[2]
+        qm_namelist = name_parts[3]
+        json_name = '{}/{}-{}{}.json'.format(tar_folder, graph_name, target_name, qm_namelist)
+
+    if json_name:
+        json_coords = {'0' : {}}
+        json_coords['0']['coords'] = x0.numpy().tolist()
+        json_coords['0']['qms'] = dict(zip(qm_namelist, tar_values.numpy().tolist()))
 
     while True:
 
@@ -71,6 +86,14 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs):
             qm_losses.append(qm_func(new_coords, args_qm))
 
         qm_losses = torch.tensor(qm_losses)
+
+        # save coordinates in json
+        if json_name:
+            # add the new drawing info every 10 iterations
+            if i % 10 == 0:
+                json_coords[str(i)] = {}
+                json_coords[str(i)]['coords'] = new_coords.numpy().tolist()
+                json_coords[str(i)]['qms'] = dict(zip(qm_namelist, qm_losses.numpy().tolist()))
 
         # if the quality metric values are within the acceptable range (abs_diff) then we accept the new coordinates and replace the old coordinates
         all_in_range = True
@@ -108,10 +131,19 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs):
     final_sim = torch.tensor(qm.similarity(global_best_sol, tar_coords))
     final_diff = torch.tensor(curr_loss_qm - tar_values)
 
+    if json_name:
+        with open(json_name, 'w') as file:
+            json.dump(json_coords, file)
+
     return {'coords': global_best_sol, 'sim': final_sim, 'qm_diff': final_diff, 'qm_og' : tar_values, 'qm_new' : curr_loss_qm}
 
 
-def save_res(coords, G, graph_name, metric_name, title):
+def save_res(coords, G, graph_name, metric_name, title, rr = False):
+
+    if rr:
+        folder_loc = 'rickroll/'
+    else:
+        folder_loc = 'results/'
 
     # set the title
     plt.title(title, fontsize = 10)
@@ -121,8 +153,8 @@ def save_res(coords, G, graph_name, metric_name, title):
     pos_G = {k: list(pos[k]) for k in G.nodes()}
     pos_G = {k : [pos_G[k][0].item(), pos_G[k][1].item()] for k in pos_G}
     nx.draw(G, with_labels = False, pos = pos_G, node_size = 16, edge_color = ['lightblue'], width = 1)
-    plt.savefig('results/{}{}.png'.format(graph_name, metric_name))
+    plt.savefig(folder_loc + '{}{}.png'.format(graph_name, metric_name))
     plt.close('all')
 
     # save the coordinates
-    np.savetxt('results/{}{}-coords.csv'.format(graph_name, metric_name), pos, delimiter = ',')
+    np.savetxt(folder_loc + '{}{}-coords.csv'.format(graph_name, metric_name), pos, delimiter = ',')
