@@ -5,7 +5,7 @@ import os
 import re
 
 import metrics as qm
-from sim_anneal import save_res, sim_anneal_torch
+from sim_anneal_mult import save_res, sim_anneal_mult
 
 
 
@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
         targets_names = dict(zip(names, targets_pos))
 
-
+        # CHANGE QUALITY METRIC COMBINATIONS HERE
         metric_combs = ['ST', 'ELD', 'CN', 'AR']
         metric_name = 'ST-ELD-CN-AR'
         # get the initial quality metric value we want to get close to qm_0
@@ -101,51 +101,24 @@ if __name__ == '__main__':
         # loop over all targets
         for target in targets_names:
 
-            # # loop over all metrics
-            # for metric in metric_dict:
-
-            # print('Doing metric: {}'.format(metric))
-
-            # get the initial quality metric value we want to get close to qm_0
-            # args_qm = [G, gtds, np.array(G.edges())]
-            # qm_target = metric_dict[metric](og_pos, args_qm)
-            #
-            # # setting epsilon, the margin that the metric can change
-            # if metric == 'CN':
-            #     abs_diff = int(qm_target / 20)
-            # else:
-            #     abs_diff = 0.0025
-
             # don't have to recompute it if we already have results of it
-            if not os.path.exists('results/{}-{}{}-coords.csv'.format(graph, target, metric_name)):
+            if not os.path.exists('rickroll/{}-{}{}-coords.csv'.format(graph, target, metric_name)):
 
                 print('Replicating shape {}'.format(target))
                 tar_pos = torch.tensor(targets_names[target]).float()
-                # args = [tar_pos, qm_target, metric_dict[metric]]
                 args = [tar_pos, qm_targets, qm_funcs]
 
                 # main simulated annealing loop, adjust variables here if necessary (start_temp and max_N)
-                result = sim_anneal_torch(x0=og_pos, args=args, args_qm=args_qm, start_temp=0.4, max_N=30000,
-                                          abs_diff=abs_diff)
-
-                # print('Similarity: {}'.format(str(round(result['sim'].item(), 4))))
-                # print('Target QM val: {}'.format(str(round(result['qm_og'].item(), 4))))
-                # print('Curr QM val: {}'.format(str(round(result['qm_new'].item(), 4))))
-                # print('QM diff: {}'.format(str(round(np.abs(result['qm_diff'].item()), 4))))
+                result = sim_anneal_mult(x0=og_pos, args=args, args_qm=args_qm, start_temp=0.4, max_N=300, abs_diffs=abs_diffs)
 
                 print('Similarity: {}'.format(str(round(result['sim'].item(), 4))))
                 print('Target QM val: {}'.format(str(result['qm_og'].numpy().round(4))))
                 print('Curr QM val: {}'.format(str(result['qm_new'].numpy().round(4))))
                 print('QM diff: {}'.format(str(result['qm_diff'].numpy().round(4))))
 
-                # title = 'Original {}: '.format(metric) + str(round(qm_target.item(), 4)) + ' | current {}: '.format(
-                #     metric) + str(
-                #     round(result['qm_new'].item(), 4)) + ' | Similarity: ' + str(round(result['sim'].item(), 4))
-                #
-                # save_res(result['coords'], G, graph_name=graph + '-' + target, metric_name=metric, title=title)
                 title = 'Original {}: '.format(metric_name) + str(qm_targets.numpy().round(4)) + '\ncurrent {}: '.format(
                     metric_name) + str(result['qm_new'].numpy().round(4)) + '\nSimilarity: ' + str(result['sim'].numpy().round(4))
 
-                save_res(result['coords'], G, graph_name=graph + '-' + target, metric_name=metric_name, title=title)
+                save_res(result['coords'], G, graph_name=graph + '-' + target, metric_name=metric_name, title=title, rr=True)
             else:
                 print('Already did this')
