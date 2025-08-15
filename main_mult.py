@@ -30,7 +30,7 @@ if __name__ == '__main__':
     # their coordinates should be put in the data/start_coords/ folder
     graphs = ['bar_albert_gen', 'polbooks', 'gams10am', 'dwt_307', 'lnsp_131']
 
-    # list the metrics and their names that you want to compute
+    # list the metrics and their names that you want to compute, select the combinations down below
     metrics = [qm.edge_lengths_sd_torch, qm.norm_stress_torch, qm.cross_pairs, qm.angular_resolution_dev]
     metric_names = ['ELD', 'ST', 'CN', 'AR']
     metric_dict = dict(zip(metric_names, metrics))
@@ -63,8 +63,8 @@ if __name__ == '__main__':
         targets_names = dict(zip(['circle', 'dinosaur', 'vert-lines', 'hor-lines', 'cross', 'grid'], targets_pos))
 
         # CHANGE COMBINATION OF METRICS HERE
-        metric_combs = ['AR', 'CN', 'ELD']
-        metric_name = 'AR-CN-ELD'
+        metric_combs = ['AR']
+        metric_name = 'AR'
         # get the initial quality metric value we want to get close to qm_0
         args_qm = [G, gtds, np.array(G.edges())]
 
@@ -98,8 +98,12 @@ if __name__ == '__main__':
                 tar_pos = torch.tensor(targets_names[target]).float()
                 args = [tar_pos, qm_targets, qm_funcs]
 
+                # set name_parts to None in case you don't want to iteratively save the coordinates of the process, if set to None only the end product is saved of the alg
+                # name_parts = None
+                name_parts = ['results', graph, target, metric_combs]
+
                 # main simulated annealing loop, adjust variables here if necessary (start_temp and max_N)
-                result = sim_anneal_mult(x0=og_pos, args=args, args_qm=args_qm, start_temp=0.4, max_N=300, abs_diffs=abs_diffs)
+                result = sim_anneal_mult(x0=og_pos, args=args, args_qm=args_qm, start_temp=0.4, max_N=30000, abs_diffs=abs_diffs, name_parts=name_parts)
 
                 print('Similarity: {}'.format(str(round(result['sim'].item(), 4))))
                 print('Target QM val: {}'.format(str(result['qm_og'].numpy().round(4))))
@@ -109,6 +113,6 @@ if __name__ == '__main__':
                 title = 'Original {}: '.format(metric_name) + str(qm_targets.numpy().round(4)) + '\ncurrent {}: '.format(
                     metric_name) + str(result['qm_new'].numpy().round(4)) + '\nSimilarity: ' + str(result['sim'].numpy().round(4))
 
-                save_res(result['coords'], G, graph_name=graph + '-' + target, metric_name=metric_name, title=title)
+                save_res(result['coords'], G, graph_name=graph + '-' + target, metric_name=metric_name, title=title, rr=False)
             else:
                 print('Already did this')
