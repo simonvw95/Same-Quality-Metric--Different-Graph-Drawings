@@ -2,6 +2,8 @@ numpy
 geomloss==0.2.6
 matplotlib
 networkx==3.4.2
+opencv-python
+pillow
 scipy==1.14.1
 seaborn==0.13.2
 statsmodels==0.14.4
