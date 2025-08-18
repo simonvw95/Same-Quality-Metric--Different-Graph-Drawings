@@ -31,7 +31,7 @@ def perturb_torch(coords):
 def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs, name_parts = None):
 
     # args for simulated annealing
-    tar_coords, tar_values, qm_funcs = args
+    tar_coords, tar_values, qm_funcs, metric_dict = args
     # copy the starting coordinates and compute the similarity
     new_sol = x0.clone()
     curr_loss_sim = torch.tensor(qm.similarity(x0, tar_coords))
@@ -82,8 +82,12 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs, name_parts 
 
         # compute the quality metric values of the new coordinates
         qm_losses = []
+        qm_losses_dict = {}
         for qm_func in qm_funcs:
-            qm_losses.append(qm_func(new_coords, args_qm))
+            loss_one_qm = qm_func(new_coords, args_qm)
+            qm_losses.append(loss_one_qm)
+            if json_name:
+                qm_losses_dict[qm_func] = loss_one_qm
 
         qm_losses = torch.tensor(qm_losses)
 
@@ -93,7 +97,11 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs, name_parts 
             if i % 10 == 0:
                 json_coords[str(i)] = {}
                 json_coords[str(i)]['coords'] = new_coords.numpy().tolist()
-                json_coords[str(i)]['qms'] = dict(zip(qm_namelist, qm_losses.numpy().tolist()))
+                qm_json = {}
+                for qm_i in qm_namelist:
+                    qm_json[qm_i] = qm_losses_dict[metric_dict[qm_i]]
+
+                json_coords[str(i)]['qms'] = qm_losses_dict
 
         # if the quality metric values are within the acceptable range (abs_diff) then we accept the new coordinates and replace the old coordinates
         all_in_range = True
