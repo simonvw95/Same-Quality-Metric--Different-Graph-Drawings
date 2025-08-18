@@ -31,8 +31,8 @@ if __name__ == '__main__':
     graphs = ['bar_albert_gen', 'polbooks', 'gams10am', 'dwt_307', 'lnsp_131']
 
     # list the metrics and their names that you want to compute, select the combinations down below
-    metrics = [qmf.edge_lengths_sd_torch, qmf.norm_stress_torch, qmf.cross_pairs, qmf.angular_resolution_dev]
-    metric_names = ['ELD', 'ST', 'CN', 'AR']
+    metrics = [qmf.norm_stress_torch, qmf.angular_resolution_dev, qmf.cross_pairs, qmf.edge_lengths_sd_torch]
+    metric_names = ['ST', 'AR', 'CN', 'ELD']
     metric_dict = dict(zip(metric_names, metrics))
 
     # loop over all graphs
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
                 print('Replicating shape {}'.format(target))
                 tar_pos = torch.tensor(targets_names[target]).float()
-                args = [tar_pos, qm_targets, qm_funcs]
+                args = [tar_pos, qm_targets, qm_funcs, metric_dict]
 
                 # set name_parts to None in case you don't want to iteratively save the coordinates of the process, if set to None only the end product is saved of the alg
                 # name_parts = None
