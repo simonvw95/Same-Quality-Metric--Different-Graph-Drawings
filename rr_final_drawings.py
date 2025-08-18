@@ -55,6 +55,7 @@ if __name__ == '__main__':
         G = nx.convert_node_labels_to_integers(G)
 
         og_pos = torch.tensor(np.loadtxt('data/start_coords/{}.csv'.format(graph), delimiter=',', dtype=np.float64)).float()
+        args = G, nx.floyd_warshall_numpy(G), np.array(G.edges())
 
         # all target names and metrics
         metric_names = ['ST', 'AR', 'CN', 'ELD']
@@ -73,7 +74,6 @@ if __name__ == '__main__':
         for metric in metric_combs:
 
             all_png_names = []
-            args = G, nx.floyd_warshall_numpy(G), np.array(G.edges())
 
             if isinstance(metric, list):
                 qm_init = {}
@@ -161,6 +161,12 @@ if __name__ == '__main__':
 
         # save the initial drawing
         full_name_init = graph + '-init.png'
+        metric = ['ST', 'ELD', 'CN', 'AR']
+        qm_init = {}
+        for sub_m in metric:
+            qm_init[sub_m] = metric_funcs[sub_m](og_pos, args).item()
+        qm_init_list = torch.tensor(list(qm_init.values()))
+
         title = ('Original {}: '.format(metric) + format_array(qm_init_list.numpy()))
 
         # create figure/axes explicitly (important for stability)
