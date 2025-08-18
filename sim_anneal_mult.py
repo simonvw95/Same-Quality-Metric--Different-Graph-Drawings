@@ -99,9 +99,9 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs, name_parts 
                 json_coords[str(i)]['coords'] = new_coords.numpy().tolist()
                 qm_json = {}
                 for qm_i in qm_namelist:
-                    qm_json[qm_i] = qm_losses_dict[metric_dict[qm_i]]
+                    qm_json[qm_i] = qm_losses_dict[metric_dict[qm_i]].item()
 
-                json_coords[str(i)]['qms'] = qm_losses_dict
+                json_coords[str(i)]['qms'] = qm_json
 
         # if the quality metric values are within the acceptable range (abs_diff) then we accept the new coordinates and replace the old coordinates
         all_in_range = True
