@@ -1,4 +1,6 @@
 numpy
+imageio
+imageio[ffmpeg]
 geomloss==0.2.6
 matplotlib
 networkx==3.4.2
