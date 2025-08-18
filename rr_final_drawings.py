@@ -6,10 +6,11 @@ import os
 import re
 from PIL import Image
 
-import metrics as qm
+import metrics as qmf
+
 
 """
-Script to produce the final .pdf drawings of all your morphed drawings of your graphs in your dataset. Only works if you have the coordinates of your results 
+Script to produce the final .pdf drawings of all your morphed drawings of your graphs in your dataset. Only works if you have the coordinates of your results
 after running main.py
 
 Change the 'graphs' variable to include more graphs
@@ -18,27 +19,14 @@ Change the 'metric_names' variable to include more metrics
 """
 
 
-# there's multiple save_res functions but each is slightly modified, this one produces pdfs with larger node sizes to show the shapes, good for latex docs
-def save_res(pos, G, full_name, text):
-
-    pos_G = {k: pos[k] for k in range(len(pos))}
-    fig, axes = plt.subplots(1, 2, gridspec_kw = {'width_ratios': [4, 1]})
-    ax = axes.flatten()
-    for i in range(2):
-        if i == 0:
-            nx.draw(G, with_labels = False, pos = pos_G, node_size = 16, edge_color = ['lightblue'], width = 0.5, node_color = ['black'], ax = ax[i])
-            # ax[i].set_xlim(-0.01, 1.01)
-            # ax[i].set_ylim(-0.01, 1.01)
-            ax[i].set_axis_off()
-        if i == 1:
-            ax[i].set_axis_off()
-            ax[i].text(0.5, 0.5, text, rotation = 90)
-    # nx.draw(G, with_labels = False, pos = pos_G, node_size = 16, edge_color = ['lightblue'], width = 0.5, node_color = ['black'])
-    # plt.axis('off')
-    plt.savefig('results/final_drawings/{}'.format(full_name), dpi = 400, bbox_inches = 'tight')
-    plt.close('all')
-
-    plt.plot()
+# format arrays: floats get 4 decimals (fixed width), ints stay ints
+def format_array(arr, decimals=4, width=8):
+    def fmt(x):
+        if float(x).is_integer():  # keep integers clean
+            return f"{int(x):{width}d}"
+        else:  # format floats with fixed width & 4 decimals
+            return f"{x:{width}.{decimals}f}"
+    return np.array2string(arr, formatter={'float_kind': fmt, 'int_kind': fmt}, separator=' ')
 
 
 # Function to extract the numeric part from the filename for sorting
@@ -66,52 +54,91 @@ if __name__ == '__main__':
         G.remove_edges_from(nx.selfloop_edges(G))
         G = nx.convert_node_labels_to_integers(G)
 
+        og_pos = torch.tensor(np.loadtxt('data/start_coords/{}.csv'.format(graph), delimiter=',', dtype=np.float64)).float()
+
         # all target names and metrics
-        metric_names = ['ELD', 'ST', 'CN', 'AR']
-        full_metric_names = dict(zip(metric_names, ['Edge Length Deviation', 'Stress', 'Number of Crossings', 'Angular Resolution']))
-        metric_funcs = dict(zip(metric_names, [qm.edge_lengths_sd_torch, qm.norm_stress_torch, qm.cross_pairs, qm.angular_resolution_dev]))
+        metric_names = ['ST', 'AR', 'CN', 'ELD']
+        full_metric_names = dict(zip(metric_names, ['Stress', 'Angular Resolution', 'Number of Crossings', 'Edge Length Deviation']))
+        metric_funcs = dict(zip(metric_names, [qmf.norm_stress_torch, qmf.angular_resolution_dev, qmf.cross_pairs, qmf.edge_lengths_sd_torch]))
         targets_names = []
-        qms_init = []
+
+        # CHANGE HERE
+        # metric combinations
+        metric_combs = [['ST', 'ELD', 'CN', 'AR'], 'ST', 'AR', 'CN', 'ELD']
 
         for file in sorted(os.listdir('rickroll/frame_coords/'), key=extract_number):
             targets_names.append(file)
         targets_names.append('init')
 
-        for metric in metric_names:
+        for metric in metric_combs:
 
             all_png_names = []
             args = G, nx.floyd_warshall_numpy(G), np.array(G.edges())
 
+            if isinstance(metric, list):
+                qm_init = {}
+                for sub_m in metric:
+                    qm_init[sub_m] = metric_funcs[sub_m](og_pos, args).item()
+                qm_init_list = torch.tensor(list(qm_init.values()))
+            else:
+                qm_init_list = metric_funcs[metric](og_pos, args)
+
             for target in targets_names:
 
-                # might need to change paths here if your folder structure is different
-                if os.path.exists('results/{}-{}{}-coords.csv'.format(graph, target, metric)):
+                # load the positioning, translate and scale them to [0,1]
+                file_metric = metric
+                if isinstance(metric, list):
+                    file_metric = str(metric).replace("'", "").replace(", ", "-").replace("[", "").replace("]", "")
 
-                    # load the positioning, translate and scale them to [0,1]
-                    pos = torch.tensor(np.loadtxt('results/{}-{}{}-coords.csv'.format(graph, target, metric), delimiter=',', dtype=np.float64)).float()
+                # might need to change paths here if your folder structure is different
+                if os.path.exists('rickroll/{}-{}{}-coords.csv'.format(graph, target, file_metric)):
+
+                    pos = torch.tensor(np.loadtxt('rickroll/{}-{}{}-coords.csv'.format(graph, target, file_metric), delimiter=',', dtype=np.float64)).float()
                     # pos = og_pos - torch.min(og_pos)
                     # pos /= torch.max(pos)
-                    qm_val = metric_funcs[metric](pos, args)
+                    if isinstance(metric, list):
+                        qm_val = {}
+                        for sub_m in metric:
+                            qm_val[sub_m] = metric_funcs[sub_m](pos, args).item()
+                        qm_new = torch.tensor(list(qm_val.values()))
+                    else:
+                        qm_new = metric_funcs[metric](pos, args)
 
-                    # save the pdf
-                    full_name = graph + '-' + target + metric + '.png'
+                    title = ('Original {}: '.format(metric) + format_array(qm_init_list.numpy()) +
+                             '\nCurrent  {}: '.format(metric) + format_array(qm_new.numpy()))
+
+                    # create figure/axes explicitly (important for stability)
+                    fig, ax = plt.subplots(figsize=(6, 6))
+
+                    # set the title
+                    ax.set_title(title, fontsize=10, rotation='vertical', x=-0.1, y=0.1)
+                    # pos = (pos - torch.min(pos)) / (torch.max(pos) - torch.min(pos))
+                    # convert nodes to dictionary for networkx
+                    pos_G = {k: list(pos[k]) for k in G.nodes()}
+                    pos_G = {k: [pos_G[k][0].item(), pos_G[k][1].item()] for k in pos_G}
+
+                    # fix axes, prevents the drawing from sometimes bouncing around due to matplotlib stuff
+                    ax.set_xlim(-0.25, 1.25)
+                    ax.set_ylim(-0.25, 1.25)
+                    ax.set_aspect('equal')  # lock aspect ratio
+                    ax.autoscale(False)  # prevent rescaling
+                    ax.set_position([0.15, 0.01, 0.99, 0.99])
+
+                    # draw network
+                    nx.draw(G, with_labels=False, pos=pos_G, node_size=20, edge_color=['lightblue'], width=0.5,
+                            node_color=['black'], ax=ax)
+
+                    # save figure
+                    full_name = '{}-{}{}.png'.format(graph, target, file_metric)
+                    plt.savefig('rickroll/' + full_name)
+                    plt.close(fig)
+
                     all_png_names.append(full_name)
-                    text = full_metric_names[metric] + ': \n' + str(round(qm_val.item(), 5))
-                    save_res(pos, G, full_name = full_name, text = text)
-
-            # different path for the initial starting coordinates of the graphs
-            if target == 'init':
-                og_pos = torch.tensor(np.loadtxt('data/start_coords/{}.csv'.format(graph), delimiter=',', dtype=np.float64)).float()
-                pos = og_pos - torch.min(og_pos)
-                pos /= torch.max(pos)
-
-                qm_val = metric_funcs[metric](pos, args)
-                qms_init.append(qm_val)
 
             # make gif
 
             # get all the PNG files in the directory
-            images = [Image.open(os.path.join('results/final_drawings/', filename)) for filename in all_png_names if filename.endswith('.png')]
+            images = [Image.open(os.path.join('rickroll/', filename)) for filename in all_png_names if filename.endswith('.png')]
 
             # rotate all images
             for i in range(len(images)):
@@ -125,7 +152,7 @@ if __name__ == '__main__':
             images += rev
 
             # define the output gif file path
-            gif_output_path = 'results/rr-{}-{}.gif'.format(graph, metric)
+            gif_output_path = 'rickroll/rr-{}-{}.gif'.format(graph, metric)
 
             # save the images as a gif at 24 frames per second
             images[0].save(gif_output_path, save_all = True, append_images = images[1:], optimize = False, duration = 1000//10, loop=0)
@@ -133,9 +160,30 @@ if __name__ == '__main__':
             print(f"GIF saved as {gif_output_path}")
 
         # save the initial drawing
-        full_name = graph + '-init.png'
-        text = ''
-        for i in range(len(metric_names)):
-            text += '\n' + full_metric_names[metric_names[i]] + ': \n' + str(round(qms_init[i].item(), 4)) + '\n'
+        full_name_init = graph + '-init.png'
+        title = ('Original {}: '.format(metric) + format_array(qm_init_list.numpy()))
 
-        save_res(pos, G, full_name = full_name, text = text)
+        # create figure/axes explicitly (important for stability)
+        fig, ax = plt.subplots(figsize=(6, 6))
+
+        # set the title
+        ax.set_title(title, fontsize=10)
+
+        # convert nodes to dictionary for networkx
+        pos_G = {k: list(og_pos[k]) for k in G.nodes()}
+        pos_G = {k: [pos_G[k][0].item(), pos_G[k][1].item()] for k in pos_G}
+
+        # fix axes, prevents the drawing from sometimes bouncing around due to matplotlib stuff
+        ax.set_xlim(-0.05, 1.05)
+        ax.set_ylim(-0.05, 1.05)
+        ax.set_aspect('equal')  # lock aspect ratio
+        ax.autoscale(False)  # prevent rescaling
+        ax.set_position([0.15, 0.01, 0.9, 0.8])
+
+        # draw network
+        nx.draw(G, with_labels=False, pos=pos_G, node_size=16, edge_color=['lightblue'], width=1,
+                node_color=['black'], ax=ax)
+
+        # save figure
+        plt.savefig('rickroll/' + full_name_init)
+        plt.close(fig)
