@@ -63,8 +63,8 @@ if __name__ == '__main__':
         targets_names = dict(zip(['circle', 'dinosaur', 'vert-lines', 'hor-lines', 'cross', 'grid'], targets_pos))
 
         # CHANGE COMBINATION OF METRICS HERE
-        metric_combs = ['AR']
-        metric_name = 'AR'
+        metric_combs = ['ST', 'AR', 'CN', 'ELD']
+        metric_name = 'ST-AR-CN-ELD'
         # get the initial quality metric value we want to get close to qm_0
         args_qm = [G, gtds, np.array(G.edges())]
 
