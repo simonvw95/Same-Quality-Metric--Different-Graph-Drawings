@@ -91,18 +91,6 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs, name_parts 
 
         qm_losses = torch.tensor(qm_losses)
 
-        # save coordinates in json
-        if json_name:
-            # add the new drawing info every 10 iterations
-            if i % 10 == 0:
-                json_coords[str(i)] = {}
-                json_coords[str(i)]['coords'] = new_coords.numpy().tolist()
-                qm_json = {}
-                for qm_i in qm_namelist:
-                    qm_json[qm_i] = qm_losses_dict[metric_dict[qm_i]].item()
-
-                json_coords[str(i)]['qms'] = qm_json
-
         # if the quality metric values are within the acceptable range (abs_diff) then we accept the new coordinates and replace the old coordinates
         all_in_range = True
         for j in range(len(qm_losses)):
@@ -126,6 +114,18 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs, name_parts 
             if curr_loss_sim <= best_loss_sim:
                 global_best_sol = new_sol.clone()
                 best_loss_sim = curr_loss_sim
+
+        # save coordinates in json
+        if json_name:
+            # add the new drawing info every 10 iterations
+            if i % 10 == 0:
+                json_coords[str(i)] = {}
+                json_coords[str(i)]['coords'] = new_sol.numpy().tolist()
+                qm_json = {}
+                for qm_i in qm_namelist:
+                    qm_json[qm_i] = qm_losses_dict[metric_dict[qm_i]].item()
+
+                json_coords[str(i)]['qms'] = qm_json
 
         # break the loop once we reach N iterations
         if i >= max_N:
