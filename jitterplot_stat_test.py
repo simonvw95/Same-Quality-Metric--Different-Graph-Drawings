@@ -36,6 +36,8 @@ if __name__ == '__main__':
     write_graphs = ['\emph{bar-albert}', '\emph{polbooks}', '\emph{lnsp\_131}', '\emph{gams10am}', '\emph{dwt\_307}']
     new_names_graphs = dict(zip(graphs, write_graphs))
 
+    # creating the jitter plot
+
     all_results = {}
     for graph in graphs:
 
@@ -134,7 +136,7 @@ if __name__ == '__main__':
     plt.close('all')
 
     ################################################################################################################
-
+    # METRIC-COMPARISON STATISTICAL TEST
     # to test whether some metrics are more difficult to fool than others we first have to transform the dataset to a wide one
     sub_res = res_df[['metric(s)', 'Similarity\%']]
     sub_res['observation'] = sub_res.groupby('metric(s)').cumcount()
@@ -228,6 +230,7 @@ if __name__ == '__main__':
 
 
     ################################################################################################################
+    # TARGET-COMPARISON STATISTICAL TEST
     # to test whether some target shapes are more difficult to fool into than others we first have to transform the dataset to a wide one
     sub_res = res_df[['target shape', 'Similarity\%']]
     sub_res['observation'] = sub_res.groupby('target shape').cumcount()
@@ -297,6 +300,7 @@ if __name__ == '__main__':
     plt.close('all')
 
     ################################################################################################################
+    # GRAPH-COMPARISON STATISTICAL TEST
     # now we test for differences between graphs
     sub_res = res_df[['graph', 'Similarity\%']]
     sub_res['observation'] = sub_res.groupby('graph').cumcount()
