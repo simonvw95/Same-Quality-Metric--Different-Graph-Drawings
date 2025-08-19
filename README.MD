@@ -58,8 +58,8 @@ information on the quality metric values of the initial drawings in /results/
 ## Example Figures of Spoofed Drawings
 For the following six target shapes we spoof 5 graphs ('bar-albert, 'polbooks', 'lnsp_131', 'gams10am', 'dwt_307') on four different quality metrics (ST : Stress, ELD : Edge Length Deviation, CN : number of crossings, AR : Angular Resolution).
 ![](example_figures/targetshapes_github.png)
-![](example_figures/teaser.pdf)
-![](example_figures/main_paper_results.pdf)
+<iframe width="100%" height="800" src="example_figures/teaser.pdf">
+<iframe width="100%" height="800" src="example_figures/main_paper_results.pdf">
 
 ## Reproducing a Video
 From a reference video, we use each frame as a target shape while keeping a metric the same
@@ -78,4 +78,4 @@ The recreated videos with the metric kept the same
 
 Keeping all 4 metrics exactly the same at the same time is more difficult:
 
-<img src="example_figures/rr-ba_rr-['ST', 'ELD', 'CN', 'AR'].gif" width="425"/>
+<img src="example_figures/rr-ba_rr-ST-ELD-CN-AR.gif" width="425"/>
