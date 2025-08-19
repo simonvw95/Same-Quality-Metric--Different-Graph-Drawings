@@ -38,6 +38,7 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs, name_parts 
     best_loss_sim = curr_loss_sim.clone()
     global_best_sol = new_sol.clone()
     curr_loss_qm = 1
+    curr_loss_qm_dict = {}
 
     # schedule for the temperature
     temp_sched = np.geomspace(start_temp, 0.001, num = max_N)
@@ -106,6 +107,7 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs, name_parts 
             new_sol = new_coords.clone()
             curr_loss_sim = new_loss_sim
             curr_loss_qm = qm_losses
+            curr_loss_qm_dict = qm_losses_dict
 
             # update the tqdm bar
             pbar.set_description("Best Similarity: " + str(round(best_loss_sim.item(), 4)) + "| Current Similarity: " + str(round(curr_loss_sim.item(), 4)) + "| curr qm losses: " + str(curr_loss_qm.numpy().round(4)))
@@ -123,7 +125,7 @@ def sim_anneal_mult(x0, args, args_qm, start_temp, max_N, abs_diffs, name_parts 
                 json_coords[str(i)]['coords'] = new_sol.numpy().tolist()
                 qm_json = {}
                 for qm_i in qm_namelist:
-                    qm_json[qm_i] = qm_losses_dict[metric_dict[qm_i]].item()
+                    qm_json[qm_i] = curr_loss_qm_dict[metric_dict[qm_i]].item()
 
                 json_coords[str(i)]['qms'] = qm_json
 
