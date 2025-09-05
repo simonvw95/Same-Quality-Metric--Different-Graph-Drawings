@@ -74,12 +74,13 @@ qm_targets = torch.tensor(qm_targets)
 
 np.random.seed(1337)
 targets_pos = [ts.circle_pos(n), ts.dinosaur(n), ts.lines(n=n, vert=True), ts.lines(n=n, vert=False),
-               ts.cross(n), ts.grid(n)]
-targets_names = dict(zip(['circle', 'dinosaur', 'vert-lines', 'hor-lines', 'cross', 'grid'], targets_pos))
+               ts.cross(n), ts.grid(n), ts.rand_pos(n)]
+targets_names = dict(zip(['circle', 'dinosaur', 'vert-lines', 'hor-lines', 'cross', 'grid', 'random'], targets_pos))
 
 
 # now that the data is loaded we can process the json files to gifs
-targets = ['circle', 'cross', 'dinosaur', 'grid', 'hor-lines', 'vert-lines']
+# targets = ['circle', 'cross', 'dinosaur', 'grid', 'hor-lines', 'vert-lines']
+targets = ['random']
 for target in targets:
 
     # target position
