@@ -141,3 +141,10 @@ def bar_alb(n):
     pos = np.array([[float(pos_dict[k][0]), float(pos_dict[k][1])] for k in pos_dict])
 
     return pos
+
+
+def rand_pos(n):
+
+    pos = np.random.rand(n, 2)
+
+    return pos
