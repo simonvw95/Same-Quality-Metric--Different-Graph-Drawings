@@ -79,8 +79,7 @@ targets_names = dict(zip(['circle', 'dinosaur', 'vert-lines', 'hor-lines', 'cros
 
 
 # now that the data is loaded we can process the json files to gifs
-# targets = ['circle', 'cross', 'dinosaur', 'grid', 'hor-lines', 'vert-lines']
-targets = ['random']
+targets = ['circle', 'cross', 'dinosaur', 'grid', 'hor-lines', 'vert-lines']# , 'random']
 for target in targets:
 
     # target position
