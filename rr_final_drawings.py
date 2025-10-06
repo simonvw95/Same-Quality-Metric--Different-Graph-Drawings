@@ -104,14 +104,21 @@ if __name__ == '__main__':
                     else:
                         qm_new = metric_funcs[metric](pos, args)
 
-                    title = ('Original {}: '.format(metric) + format_array(qm_init_list.numpy()) +
-                             '\nCurrent  {}: '.format(metric) + format_array(qm_new.numpy()))
-
+                    if isinstance(metric, list):
+                        title = ('Original {}:\n'.format(metric) + format_array(qm_init_list.numpy()) +
+                                 '\nCurrent  {}:\n'.format(metric) + format_array(qm_new.numpy()))
+                        fontsize_title = 20
+                        x_cutoff = -0.025
+                    else:
+                        title = ('Original {}: '.format(metric) + format_array(qm_init_list.numpy()) +
+                                 '\nCurrent  {}: '.format(metric) + format_array(qm_new.numpy()))
+                        fontsize_title = 25
+                        x_cutoff = -0.075
                     # create figure/axes explicitly (important for stability)
                     fig, ax = plt.subplots(figsize=(6, 6))
 
                     # set the title
-                    ax.set_title(title, fontsize=10, rotation='vertical', x=-0.1, y=0.1)
+                    ax.set_title(title, fontsize=fontsize_title, rotation='vertical', x=x_cutoff, y=0.1)
                     # pos = (pos - torch.min(pos)) / (torch.max(pos) - torch.min(pos))
                     # convert nodes to dictionary for networkx
                     pos_G = {k: list(pos[k]) for k in G.nodes()}
@@ -125,7 +132,7 @@ if __name__ == '__main__':
                     ax.set_position([0.15, 0.01, 0.99, 0.99])
 
                     # draw network
-                    nx.draw(G, with_labels=False, pos=pos_G, node_size=20, edge_color=['lightblue'], width=0.5,
+                    nx.draw(G, with_labels=False, pos=pos_G, node_size=5, edge_color=['lightblue'], width=0.5,
                             node_color=['black'], ax=ax)
 
                     # save figure
