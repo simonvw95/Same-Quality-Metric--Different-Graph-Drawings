@@ -61,7 +61,7 @@ For the following six target shapes we fool 5 graphs ('bar-albert, 'polbooks', '
 ![](example_figures/teaser.png)
 ![](example_figures/main_paper_results.png)
 
-For videos of how these drawings slowly morph into their targets see the .mp4 files in results/final_drawings/
+For videos of how these drawings slowly morph into their targets see the .mp4 files in results/final_drawings/ or have a look here on GitHub Pages link
 
 
 ## Reproducing a Video
